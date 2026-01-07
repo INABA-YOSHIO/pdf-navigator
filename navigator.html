@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>PDF ナビゲータ</title>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; }
+  iframe { width: 100%; height: 100%; border: none; }
+</style>
+<script>
+  function getQueryParam(name) {
+    const params = new URLSearchParams(window.location.search);
+    return params.get(name);
+  }
+
+  window.onload = function () {
+    const page = getQueryParam('page') || 1;
+    const pdfPath = 'NewQM-Height_GUI仕様書_v1.02.pdf';
+    const viewerUrl = `pdfjs/web/viewer.html?file=${encodeURIComponent(pdfPath)}#page=${page}`;
+    document.getElementById('pdfFrame').src = viewerUrl;
+  };
+</script>
+</head>
+<body>
+  <iframe id="pdfFrame"></iframe>
+</body>
+</html>
