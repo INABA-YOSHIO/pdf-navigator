@@ -1,27 +1,57 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<title>PDF ナビゲータ</title>
-<style>
-  html, body { margin: 0; padding: 0; height: 100%; }
-  iframe { width: 100%; height: 100%; border: none; }
-</style>
-<script>
-  function getQueryParam(name) {
-    const params = new URLSearchParams(window.location.search);
-    return params.get(name);
-  }
-
-  window.onload = function () {
-    const page = getQueryParam('page') || 1;
-    const pdfPath = 'NewQM-Height_GUI仕様書_v1.02.pdf';
-    const viewerUrl = `pdfjs/web/viewer.html?file=${encodeURIComponent(pdfPath)}#page=${page}`;
-    document.getElementById('pdfFrame').src = viewerUrl;
-  };
-</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PDF Navigator</title>
+  <!-- PDF.js from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Noto Sans JP', sans-serif; }
+    header { padding: 8px 12px; background:#f3f3f3; border-bottom:1px solid #ddd; }
+    #status { font-size: 12px; color:#444; }
+    #viewer { display:flex; justify-content:center; padding:16px; }
+    canvas { box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+  </style>
 </head>
 <body>
-  <iframe id="pdfFrame"></iframe>
+<header>
+  <div id="status">読み込み待ち…</div>
+</header>
+<div id="viewer"><canvas id="pdf"></canvas></div>
+
+<script>
+// Worker 設定（必須）
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// URL クエリから ?file= を取得
+const params = new URLSearchParams(window.location.search);
+const fileParam = params.get('file');
+
+// フォールバック（クエリが無いときに使うサンプルパス）
+const DEFAULT_PDF = 'docs/sample.pdf';
+const pdfUrl = fileParam || DEFAULT_PDF;
+
+document.getElementById('status').textContent = `PDF: ${pdfUrl}`;
+
+// 1ページ目を描画する最小実装
+pdfjsLib.getDocument(pdfUrl).promise
+  .then(pdf => pdf.getPage(1))
+  .then(page => {
+    const scale = 1.4;
+    const viewport = page.getViewport({ scale });
+    const canvas = document.getElementById('pdf');
+    const ctx = canvas.getContext('2d');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    page.render({ canvasContext: ctx, viewport });
+    document.getElementById('status').textContent += ' / 1ページ目を表示中';
+  })
+  .catch(err => {
+    console.error(err);
+    document.getElementById('status').textContent = '読み込みエラー: ' + err.message;
+  });
+</script>
 </body>
 </html>
